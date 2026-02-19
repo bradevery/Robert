@@ -94,8 +94,8 @@ export default function OrganizationPage() {
       await joinOrganization.mutateAsync(inviteCode);
       toast.success("Vous avez rejoint l'organisation !");
       nextStep();
-    } catch (error: any) {
-      toast.error(error.message || "Code d'invitation invalide");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Code d'invitation invalide");
     }
   };
 

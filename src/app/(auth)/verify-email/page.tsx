@@ -31,8 +31,8 @@ function VerifyEmailPageContent() {
       try {
         await verifyMutation.mutateAsync(token);
         setStatus('success');
-      } catch (error: any) {
-        if (error.message === 'Token expired') {
+      } catch (error: unknown) {
+        if (error instanceof Error && error.message === 'Token expired') {
           setStatus('expired');
         } else {
           setStatus('error');
