@@ -1,0 +1,196 @@
+@charset "UTF-8";
+/*
+Project/Template Name:  CVbuilder - Constucteur de CV
+Template Url: 
+Author: Ibrahim lounas
+Version: 1.0.0
+Description: CVbuilder -  Constucteur de CV
+Tag: CV Builder, CV, Construceteur de cv
+*/
+/* == Table Of Content  == */
+
+/*=================================
+   Bootstrap Sass
+==================================*/
+/*=================================
+   Theme Based
+==================================*/
+/* @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;display=swap"); */
+/* Mixins */
+/* Variables */
+:root {
+  /* --title-font-family: "DM Sans", sans-serif;
+  --body-font-family: "DM Sans", sans-serif; */
+  --icon-font-family: 'Font Awesome 6 Pro';
+  --icon-font-family2: 'Flaticon';
+  --container-width: 1460px;
+  --divder-space: 200px;
+  --headings-color: #222222;
+  --body-text-color: #6b7177;
+}
+
+/* .primary-color {
+  color: #005e53;
+}
+
+.bg-primary-color: {
+  background-color: #005e53;
+} */
+
+/* Typography Styles */
+html,
+body {
+  scroll-behavior: smooth !important;
+  background-color: #fff;
+}
+
+body {
+  background-color: #fff;
+  /* font-family: var(--body-font-family); */
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--body-text-color);
+  line-height: 28px;
+  -webkit-font-smoothing: antialiased;
+  -webkit-transition: all 0.4s ease;
+  -moz-transition: all 0.4s ease;
+  -ms-transition: all 0.4s ease;
+  -o-transition: all 0.4s ease;
+  transition: all 0.4s ease;
+}
+
+a,
+.btn {
+  color: var(--headings-color);
+  text-decoration: none;
+  outline: none;
+  -webkit-transition: all ease 0.4s;
+  -moz-transition: all ease 0.4s;
+  -o-transition: all ease 0.4s;
+  transition: all ease 0.4s;
+}
+a:hover,
+.btn:hover {
+  color: #005e53;
+}
+a:active,
+a:focus,
+a:hover,
+a:visited,
+.btn:active,
+.btn:focus,
+.btn:hover,
+.btn:visited {
+  text-decoration: none;
+  outline: none;
+}
+
+button,
+.btn {
+  -webkit-transition: all ease 0.4s;
+  -moz-transition: all ease 0.4s;
+  -o-transition: all ease 0.4s;
+  transition: all ease 0.4s;
+}
+
+iframe {
+  border: none;
+  width: 100%;
+}
+
+.h1,
+h1,
+.h2,
+h2,
+.h3,
+h3,
+.h4,
+h4,
+.h5,
+h5,
+.h6,
+h6 {
+  /* font-family: var(--title-font-family); */
+  color: var(--headings-color);
+  line-height: 1.3125;
+}
+
+.h1,
+h1,
+.h2,
+h2,
+.h3,
+h3 {
+  font-weight: 700;
+}
+
+.h4,
+h4,
+.h5,
+h5,
+.h6,
+h6 {
+  font-weight: 500;
+}
+
+p {
+  margin: 0 0 15px 0;
+  color: var(--body-text-color);
+  line-height: 1.85;
+  font-weight: 400;
+}
+
+h1 a,
+h2 a,
+h3 a,
+h4 a,
+h5 a,
+h6 a,
+p a,
+span a {
+  font-size: inherit;
+  font-family: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
+
+.h1,
+h1 {
+  font-size: 45px;
+}
+
+.h2,
+h2 {
+  font-size: 32px;
+}
+
+.h3,
+h3 {
+  font-size: 24px;
+}
+
+.h4,
+h4 {
+  font-size: 20px;
+}
+
+.h5,
+h5 {
+  font-size: 17px;
+}
+
+.h6,
+h6 {
+  font-size: 15px;
+}
+
+li {
+  list-style-type: none;
+}
+
+@media (max-width: 575.98px) {
+  .h2,
+  h2 {
+    font-size: 20px;
+  }
+}

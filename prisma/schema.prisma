@@ -1,0 +1,1318 @@
+generator client {
+  provider        = "prisma-client-js"
+  binaryTargets   = ["native", "rhel-openssl-1.0.x"]
+  previewFeatures = ["fullTextSearch", "postgresqlExtensions"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+  // Note: pgvector, pg_trgm, unaccent extensions are optional - enable when available
+  // extensions = [vector, pg_trgm, unaccent]
+}
+
+enum Role {
+  Freelancer @map("freelancer")
+  Client     @map("client")
+}
+
+enum OrgRole {
+  owner  @map("owner")
+  admin  @map("admin")
+  editor @map("editor")
+  viewer @map("viewer")
+}
+
+enum MemberStatus {
+  active    @map("active")
+  invited   @map("invited")
+  suspended @map("suspended")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model User {
+  id                     String    @id @default(cuid())
+  name                   String?
+  firstName              String
+  lastName               String?
+  email                  String?   @unique
+  emailVerified          Boolean?  @default(false) @map("email_verified")
+  emailVerificationToken String?   @unique
+  image                  String?
+  tel                    String?
+  password               String?
+  lastEmailSent          DateTime?
+  lastVerificationReset  DateTime?
+  emailVerificationCount Int       @default(0)
+  organizationId         String?
+
+  // Spécifique France
+  nationality   String? @default("Française")
+  hasWorkPermit Boolean @default(true)
+
+  // Relations
+  account                  Account[]
+  session                  Session[]
+  profile                  Profile?
+  resumes                  Resume[]
+  jobs                     Job[]
+  matchingAnalyses         MatchingAnalysis[]
+  authenticityLogs         AuthenticityLog[]
+  twoFactorAuth            TwoFactorAuth?
+  dossiers                 Dossier[]
+  chatThreads              ChatThread[]
+  notifications            Notification[]
+  settings                 UserSettings?
+  activityLogs             ActivityLog[]
+  comments                 Comment[]
+  pipelineSessions         PipelineSession[]
+  resetPasswordToken       String?            @unique
+  resetPasswordTokenExpiry DateTime?
+  organization             Organization?      @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  memberships              OrganizationMember[]
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
+
+  @@map("users")
+}
+
+model Profile {
+  id          Int      @id @default(autoincrement())
+  userId      String   @unique
+  isValidated Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  logoUrl   String?
+  country   String   @default("FR")
+
+  // ESN Profile (charte graphique & identité)
+  primaryColor     String  @default("#2563EB") // Couleur principale
+  secondaryColor   String  @default("#1E40AF") // Couleur secondaire
+  fontFamily       String  @default("Inter")
+  pitch            String? @db.Text // Description / pitch ESN
+  siret            String?
+  website          String?
+  tonCommunication String  @default("professionnel") // professionnel, dynamique, formel
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members              OrganizationMember[]
+  users                User[]
+  clients              Client[]
+  candidates           Candidate[]
+  dossiers             Dossier[]
+  templates            Template[]
+  candidateInvitations CandidateInvitation[]
+  pipelineSessions     PipelineSession[]
+
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  id        String       @id @default(cuid())
+  orgId     String
+  userId    String
+  role      OrgRole
+  status    MemberStatus @default(active)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, userId])
+  @@map("organization_members")
+}
+
+model Resume {
+  id       String  @id @default(cuid())
+  userId   String
+  title    String
+  slug     String  @unique
+  isPublic Boolean @default(false)
+  isLocked Boolean @default(false)
+  atsScore Int?    @default(0)
+  notes    String?
+
+  // Données brutes
+  rawText  String? @db.Text
+  fileUrl  String?
+  fileName String?
+  fileType String?
+
+  // Données structurées (JSON)
+  data     Json
+  metadata Json
+
+  // Contexte français
+  frenchContext FrenchResumeContext?
+
+  // Données extraites
+  extractedData ExtractedResumeData?
+
+  // Authenticité
+  authenticityScore AuthenticityScore?
+
+  // Relations
+  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  views            ResumeView[]
+  matchingAnalyses MatchingAnalysis[]
+  improvements     ResumeImprovement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([slug])
+  @@map("resumes")
+}
+
+model ResumeView {
+  id        String   @id @default(cuid())
+  resumeId  String
+  ipAddress String?
+  userAgent String?
+  viewedAt  DateTime @default(now())
+
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@map("resume_views")
+}
+
+model TwoFactorAuth {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  secret      String
+  backupCodes String[]
+  isEnabled   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("two_factor_auth")
+}
+
+// ============================================
+// MODÈLES POUR LE MATCHING AUTHENTIQUE
+// ============================================
+
+model FrenchResumeContext {
+  id       String @id @default(cuid())
+  resumeId String @unique
+
+  // Éducation française
+  diplomeFrancais Json @default("{}") // {niveau: "Bac+5", type: "Master", ecole: ""}
+  niveauRNCP      Int? // Niveau RNCP (1-8)
+
+  // Statut professionnel
+  statutActuel         String? // "Cadre", "ETAM", "Indépendant"
+  conventionCollective String? // "Syntec", "Métallurgie", etc.
+
+  // Langues (CECRL)
+  langues Json @default("[]") // [{langue: "Anglais", niveau: "B2", certification: "TOEIC 850"}]
+
+  // Mobilité
+  mobiliteGeographique Json     @default("{}") // {nationale: true, internationale: false, regions: []}
+  permisConduire       String[] @default([]) // ["B", "A"]
+
+  // Prétentions
+  pretentionsSalariales Json    @default("{}") // {min: 35000, max: 45000, negotiable: true}
+  disponibilite         String? // "Immédiate", "1 mois", "3 mois"
+
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@map("french_resume_contexts")
+}
+
+model ExtractedResumeData {
+  id       String @id @default(cuid())
+  resumeId String @unique
+
+  // Mots-clés extraits avec contexte français
+  keywords       Json // Structure enrichie avec contexte
+  hardSkills     Json @default("[]")
+  softSkills     Json @default("[]")
+  tools          Json @default("[]")
+  certifications Json @default("[]")
+
+  // Embeddings pour recherche sémantique (pgvector)
+  fullTextEmbedding   Json? // TODO: Re-enable as Unsupported("vector(1536)")? when pgvector is installed
+  keywordsEmbedding   Json? // TODO: Re-enable as Unsupported("vector(1536)")? when pgvector is installed
+  skillsEmbedding     Json? // TODO: Re-enable as Unsupported("vector(1536)")? when pgvector is installed
+  experienceEmbedding Json? // TODO: Re-enable as Unsupported("vector(1536)")? when pgvector is installed
+
+  // Analyse sémantique française
+  secteursPertinents String[] // ["Tech", "Finance", "Santé"]
+  niveauExperience   String? // "Junior", "Confirmé", "Senior", "Expert"
+
+  // Statistiques
+  totalWords      Int   @default(0)
+  totalSkills     Int   @default(0)
+  totalExperience Float @default(0) // années
+  coherenceScore  Float @default(0) // 0-1
+
+  // Métadonnées
+  extractedAt       DateTime @default(now())
+  processingTime    Int? // millisecondes
+  extractionVersion String   @default("1.0")
+
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@index([resumeId])
+  @@map("extracted_resume_data")
+}
+
+model AuthenticityScore {
+  id       String @id @default(cuid())
+  resumeId String @unique
+
+  // Score global d'authenticité (0-1)
+  globalScore Float
+
+  // Détails du score
+  naturalLanguageScore Float // Naturel du langage
+  coherenceScore       Float // Cohérence temporelle
+  personalityScore     Float // Présence de personnalité
+  keywordDensity       Float // Densité mots-clés (inverse)
+  uniquenessScore      Float // Originalité du contenu
+
+  // Problèmes détectés
+  issues Json @default("[]") // [{type: "sur-optimisation", severity: "high"}]
+
+  // Recommandations
+  recommendations Json @default("[]")
+
+  calculatedAt DateTime @default(now())
+
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@index([globalScore])
+  @@map("authenticity_scores")
+}
+
+model Job {
+  id       String  @id @default(cuid())
+  userId   String
+  title    String
+  company  String?
+  location String?
+
+  // Description du poste
+  description  String  @db.Text
+  requirements String? @db.Text
+
+  // Contexte français
+  frenchContext FrenchJobContext?
+
+  // Données extraites
+  extractedData ExtractedJobData?
+
+  // Relations
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  matchingAnalyses MatchingAnalysis[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("jobs")
+}
+
+model FrenchJobContext {
+  id    String @id @default(cuid())
+  jobId String @unique
+
+  // Type d'entreprise
+  typeEntreprise   String? // "startup", "pme", "grand_groupe", "public"
+  tailleEntreprise String? // "1-10", "11-50", "51-250", "250+"
+  secteurActivite  String? // Code NAF
+
+  // Contrat et conditions
+  typeContrat             String? // "CDI", "CDD", "Alternance", "Stage"
+  conventionCollective    String?
+  coefficientHierarchique Int?
+  statutCadre             Boolean @default(false)
+
+  // Formation requise
+  niveauEtudesMin  String? // "Bac+2", "Bac+3", "Bac+5"
+  diplomesAcceptes String[] // ["Master Info", "Ingénieur", "DUT"]
+
+  // Rémunération
+  salaireMin Int?
+  salaireMax Int?
+  avantages  Json @default("[]") // ["Tickets resto", "Mutuelle", "RTT"]
+
+  // Localisation
+  teletravail             Json    @default("{}") // {possible: true, jours: 2}
+  mobiliteProfessionnelle Boolean @default(false)
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@map("french_job_contexts")
+}
+
+model ExtractedJobData {
+  id    String @id @default(cuid())
+  jobId String @unique
+
+  // Mots-clés avec poids
+  keywords        Json
+  requiredSkills  Json @default("[]") // [{skill: "React", level: "Expert", priority: "high"}]
+  preferredSkills Json @default("[]")
+  tools           Json @default("[]")
+  certifications  Json @default("[]")
+
+  // Embeddings (pgvector)
+  fullTextEmbedding     Json? // TODO: Re-enable as Unsupported("vector(1536)")? when pgvector is installed
+  requirementsEmbedding Json? // TODO: Re-enable as Unsupported("vector(1536)")? when pgvector is installed
+  cultureEmbedding      Json? // TODO: Re-enable as Unsupported("vector(1536)")? when pgvector is installed
+
+  // Exigences structurées
+  yearsExperienceMin Int?
+  yearsExperienceMax Int?
+  educationLevel     String? // "Bac+2", "Bac+5", etc.
+  requiredLanguages  Json    @default("[]") // [{language: "Anglais", level: "B2"}]
+
+  // Culture d'entreprise
+  companyValues   String[]
+  workEnvironment String? // "Agile", "Startup", "Corporate"
+  teamSize        String?
+
+  // Métadonnées
+  extractedAt    DateTime @default(now())
+  processingTime Int?
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@map("extracted_job_data")
+}
+
+model MatchingAnalysis {
+  id       String @id @default(cuid())
+  resumeId String
+  jobId    String
+  userId   String
+
+  // Score global AUTHENTIC
+  overallScore      Float // 0-100
+  authenticityBonus Float @default(0) // Bonus pour authenticité
+
+  // Scores détaillés multi-dimensionnels
+  technicalSkillsScore Float
+  experienceScore      Float
+  educationScore       Float
+  softSkillsScore      Float
+  culturalFitScore     Float
+  authenticityScore    Float
+
+  // Analyse des compétences
+  skillsAnalysis Json // Exact, similaires, transférables, manquantes
+
+  // Analyse contextuelle française
+  frenchContextAnalysis Json // Équivalences diplômes, conventions, etc.
+
+  // Suggestions naturelles
+  naturalSuggestions Json // [{type, suggestion, example, impact, isNatural}]
+
+  // Détection sur-optimisation
+  overOptimizationFlags Json @default("[]")
+
+  // Poids adaptatifs utilisés
+  adaptiveWeights Json
+  sectorContext   String?
+
+  // Métadonnées
+  analysisType    String @default("authentic")
+  processingTime  Int
+  matchingVersion String @default("2.0")
+
+  // Relations
+  resume Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  job    Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([resumeId])
+  @@index([jobId])
+  @@index([userId])
+  @@index([overallScore])
+  @@map("matching_analyses")
+}
+
+model ResumeImprovement {
+  id       String @id @default(cuid())
+  resumeId String
+  version  Int    @default(1)
+
+  // Amélioration naturelle
+  originalContent String @db.Text
+  improvedContent String @db.Text
+
+  // Changements appliqués
+  naturalChanges Json // Changements qui préservent l'authenticité
+
+  // Scores
+  originalScore          Float
+  improvedScore          Float
+  authenticityMaintained Boolean @default(true)
+
+  // Validation
+  userAccepted Boolean? // L'utilisateur a-t-il accepté ?
+  userFeedback String?
+
+  resume    Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([resumeId])
+  @@map("resume_improvements")
+}
+
+// ============================================
+// RÉFÉRENTIELS FRANÇAIS
+// ============================================
+
+model FrenchDiploma {
+  id String @id @default(cuid())
+
+  // Informations diplôme
+  name  String @unique
+  level String // "Bac+2", "Bac+3", etc.
+  rncp  Int? // Niveau RNCP
+  type  String // "BTS", "DUT", "Licence", "Master"
+
+  // Équivalences
+  equivalents   String[] // Autres diplômes équivalents
+  europeanLevel String? // Niveau européen
+
+  // Domaines
+  domains String[] // ["Informatique", "Commerce"]
+
+  @@index([level])
+  @@index([type])
+  @@map("french_diplomas")
+}
+
+model FrenchCompany {
+  id String @id @default(cuid())
+
+  // Informations entreprise
+  name  String
+  siret String? @unique
+
+  // Classification
+  size       String // "startup", "pme", "eti", "grand_groupe"
+  sector     String // Code NAF
+  convention String? // Convention collective
+
+  // Culture
+  cultureKeywords String[] // Mots-clés culturels
+  values          String[]
+
+  @@index([name])
+  @@index([sector])
+  @@map("french_companies")
+}
+
+model FrenchSkillOntology {
+  id String @id @default(cuid())
+
+  // Compétence
+  skillName String @unique
+  category  String // "technique", "comportementale", "outil"
+
+  // Relations
+  synonyms      String[] // Synonymes français
+  relatedSkills String[] // Compétences liées
+  parentSkill   String? // Compétence parente
+
+  // Contexte
+  sectors   String[] // Secteurs pertinents
+  jobTitles String[] // Postes associés
+
+  // Niveau
+  defaultLevel String? // "Débutant", "Intermédiaire", "Avancé"
+
+  @@index([category])
+  @@index([skillName])
+  @@map("french_skill_ontology")
+}
+
+// ============================================
+// CACHE ET PERFORMANCE
+// ============================================
+
+model EmbeddingCache {
+  id          String @id @default(cuid())
+  contentHash String @unique
+  contentType String
+  language    String @default("fr")
+
+  // Embedding (pgvector)
+  embedding Json? // TODO: Re-enable as Unsupported("vector(1536)")? when pgvector is installed
+
+  // Métadonnées
+  model      String @default("text-embedding-3-small")
+  dimensions Int    @default(1536)
+  tokenCount Int?
+
+  // Cache
+  hitCount       Int      @default(0)
+  lastAccessedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([contentHash])
+  @@index([expiresAt])
+  @@map("embedding_cache")
+}
+
+// ============================================
+// LOGS ET MONITORING
+// ============================================
+
+model AuthenticityLog {
+  id       String  @id @default(cuid())
+  userId   String?
+  resumeId String?
+
+  // Détection
+  detectionType String // "sur-optimisation", "incohérence", "plagiat"
+  severity      String // "low", "medium", "high"
+  details       Json
+
+  // Action prise
+  actionTaken String? // "warning", "score_penalty", "blocked"
+
+  user User? @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([detectionType])
+  @@map("authenticity_logs")
+}
+
+model MatchingMetrics {
+  id String @id @default(cuid())
+
+  // Métriques quotidiennes
+  date DateTime @unique
+
+  // Volume
+  totalMatches     Int @default(0)
+  authenticMatches Int @default(0)
+
+  // Qualité
+  avgAuthenticityScore Float @default(0)
+  avgMatchScore        Float @default(0)
+
+  // Adoption
+  suggestionsGenerated Int @default(0)
+  suggestionsAccepted  Int @default(0)
+
+  // Performance
+  avgProcessingTime Int   @default(0) // ms
+  cacheHitRate      Float @default(0)
+
+  @@index([date])
+  @@map("matching_metrics")
+}
+
+// ============================================
+// GESTION DES CANDIDATS
+// ============================================
+
+enum CandidateStatus {
+  new       @map("new")
+  contacted @map("contacted")
+  qualified @map("qualified")
+  proposed  @map("proposed")
+  placed    @map("placed")
+  rejected  @map("rejected")
+}
+
+enum Availability {
+  immediate   @map("immediate")
+  oneMonth    @map("1month")
+  threeMonths @map("3months")
+}
+
+enum CandidateInvitationStatus {
+  pending   @map("pending")
+  opened    @map("opened")
+  completed @map("completed")
+  expired   @map("expired")
+}
+
+model Candidate {
+  id     String  @id @default(cuid())
+  userId String?
+  orgId  String?
+
+  // Informations de base
+  firstName String
+  lastName  String
+  email     String  @unique
+  phone     String?
+  photo     String?
+
+  // Profil professionnel
+  title           String // Titre du poste
+  summary         String? @db.Text
+  yearsExperience Int     @default(0)
+  seniorityLevel  String? // Junior, Confirmé, Senior, Expert
+
+  // Informations contractuelles
+  tjm               Int? // Taux Journalier Moyen
+  salaryExpectation Int?
+  availability      Availability    @default(immediate)
+  status            CandidateStatus @default(new)
+
+  // Localisation
+  location         String?
+  mobility         Json    @default("{}") // {national: true, international: false, regions: []}
+  remotePreference String? // "full", "hybrid", "onsite"
+
+  // Compétences
+  skills         String[]
+  tools          String[]
+  certifications String[]
+  languages      Json     @default("[]") // [{name: "Anglais", level: "B2"}]
+
+  // CV et documents
+  resumeId  String?
+  documents Document[]
+
+  // Notes et tags
+  notes  String?  @db.Text
+  tags   String[]
+  source String? // LinkedIn, Cooptation, etc.
+
+  // Relations
+  dossierCandidates DossierCandidate[]
+  invitations       CandidateInvitation[]
+  organization      Organization? @relation(fields: [orgId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([status])
+  @@index([availability])
+  @@map("candidates")
+}
+
+model CandidateInvitation {
+  id          String                     @id @default(cuid())
+  candidateId String?
+  dossierId   String?
+  orgId       String?
+  email       String
+  name        String?
+  status      CandidateInvitationStatus @default(pending)
+  token       String                     @unique
+  sentAt      DateTime                   @default(now())
+  openedAt    DateTime?
+  completedAt DateTime?
+  expiresAt   DateTime
+
+  candidate    Candidate?    @relation(fields: [candidateId], references: [id], onDelete: SetNull)
+  dossier      Dossier?      @relation(fields: [dossierId], references: [id], onDelete: SetNull)
+  organization Organization? @relation(fields: [orgId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([expiresAt])
+  @@map("candidate_invitations")
+}
+
+// ============================================
+// GESTION DES CLIENTS
+// ============================================
+
+enum ClientStatus {
+  prospect @map("prospect")
+  active   @map("active")
+  inactive @map("inactive")
+}
+
+model Client {
+  id     String  @id @default(cuid())
+  userId String?
+  orgId  String?
+
+  // Informations de base
+  name        String
+  sector      String
+  website     String?
+  address     String?
+  description String? @db.Text
+  logo        String?
+
+  // Classification
+  status  ClientStatus @default(prospect)
+  size    String? // startup, pme, eti, grand_groupe
+  revenue Int?
+
+  // Contacts
+  contacts ClientContact[]
+
+  // Projets
+  dossiers Dossier[]
+  organization Organization? @relation(fields: [orgId], references: [id], onDelete: SetNull)
+
+  // Notes et tags
+  notes String?  @db.Text
+  tags  String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name])
+  @@index([status])
+  @@map("clients")
+}
+
+model ClientContact {
+  id       String @id @default(cuid())
+  clientId String
+
+  name      String
+  role      String
+  email     String?
+  phone     String?
+  isPrimary Boolean @default(false)
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("client_contacts")
+}
+
+// ============================================
+// GESTION DES DOSSIERS / APPELS D'OFFRES
+// ============================================
+
+enum DossierStatus {
+  draft      @map("draft")
+  inProgress @map("in-progress")
+  submitted  @map("submitted")
+  won        @map("won")
+  lost       @map("lost")
+}
+
+model Dossier {
+  id       String  @id @default(cuid())
+  userId   String
+  orgId    String?
+  clientId String?
+  templateId String?
+
+  // Informations de base
+  title       String
+  description String? @db.Text
+  reference   String? // Référence interne
+
+  // Statut et dates
+  status         DossierStatus @default(draft)
+  version        Int           @default(1)
+  deadline       DateTime?
+  submissionDate DateTime?
+
+  // Budget
+  budget    Int?
+  budgetMin Int?
+  budgetMax Int?
+
+  // Profils requis
+  requiredProfiles Int @default(1)
+  matchedProfiles  Int @default(0)
+
+  // Scoring
+  score       Int? // Score de matching global
+  goNoGoScore Int? // Score Go/No-Go
+
+  // Compétences requises
+  requiredSkills  String[]
+  preferredSkills String[]
+
+  // Documents
+  documents Document[]
+
+  // Analyse AO
+  aoAnalysis AOAnalysis?
+
+  // Propales générées
+  propales Propale[]
+
+  // Coaching kits
+  coachingKits CoachingKit[]
+
+  // Pipeline sessions
+  pipelineSessions PipelineSession[]
+
+  // Collaboration
+  comments Comment[]
+
+  // Relations
+  client       Client?            @relation(fields: [clientId], references: [id])
+  template     Template?          @relation(fields: [templateId], references: [id])
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  candidates   DossierCandidate[]
+  invitations  CandidateInvitation[]
+  organization Organization?      @relation(fields: [orgId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([clientId])
+  @@index([status])
+  @@map("dossiers")
+}
+
+model DossierCandidate {
+  id          String @id @default(cuid())
+  dossierId   String
+  candidateId String
+
+  // Matching
+  matchScore Int?
+  status     String @default("proposed") // proposed, accepted, rejected
+
+  // Notes
+  notes String? @db.Text
+
+  dossier   Dossier   @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  candidate Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([dossierId, candidateId])
+  @@map("dossier_candidates")
+}
+
+// ============================================
+// ANALYSE D'APPELS D'OFFRES
+// ============================================
+
+model AOAnalysis {
+  id        String @id @default(cuid())
+  dossierId String @unique
+
+  // Résumé
+  summary String? @db.Text
+
+  // Compétences extraites
+  requiredSkills  Json @default("[]") // [{skill: "", priority: "high/medium/low"}]
+  preferredSkills Json @default("[]")
+
+  // Profils requis
+  requiredProfiles Json @default("[]") // [{title: "", count: 1, seniority: ""}]
+
+  // Risques identifiés
+  risks Json @default("[]") // [{type: "", description: "", severity: ""}]
+
+  // Opportunités
+  opportunities Json @default("[]")
+
+  // Score Go/No-Go
+  goNoGoScore   Int?
+  goNoGoReasons Json @default("[]")
+
+  // Budget extrait
+  extractedBudget Int?
+  budgetAnalysis  String?
+
+  // Dates clés
+  keyDates Json @default("[]") // [{type: "", date: "", description: ""}]
+
+  // Critères d'évaluation
+  evaluationCriteria Json @default("[]")
+
+  // Fichier source
+  sourceFile String?
+  analyzedAt DateTime @default(now())
+
+  dossier Dossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+
+  @@map("ao_analyses")
+}
+
+// ============================================
+// PROPALES (PROPOSITIONS COMMERCIALES)
+// ============================================
+
+model Propale {
+  id        String @id @default(cuid())
+  dossierId String
+
+  // Informations de base
+  title   String
+  version Int    @default(1)
+  status  String @default("draft") // draft, review, sent, accepted, rejected
+
+  // Contenu
+  introduction     String? @db.Text
+  approach         String? @db.Text
+  methodology      String? @db.Text
+  teamPresentation String? @db.Text
+  pricing          Json    @default("{}") // {total: 0, breakdown: []}
+  timeline         Json    @default("[]") // [{phase: "", duration: "", description: ""}]
+
+  // Équipe proposée
+  proposedTeam Json @default("[]") // [{candidateId: "", role: ""}]
+
+  // Documents générés
+  pdfUrl  String?
+  pptxUrl String?
+  docxUrl String?
+
+  // Métadonnées
+  generatedBy  String? // "ai" ou "manual"
+  aiPromptUsed String? @db.Text
+
+  dossier Dossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([dossierId])
+  @@map("propales")
+}
+
+// ============================================
+// PIPELINE GUIDÉE (8 ÉTAPES)
+// ============================================
+
+enum PipelineStatus {
+  active    @map("active")
+  paused    @map("paused")
+  completed @map("completed")
+  abandoned @map("abandoned")
+}
+
+model PipelineSession {
+  id        String  @id @default(cuid())
+  userId    String
+  orgId     String?
+  dossierId String?
+
+  // État de la pipeline
+  currentStep Int            @default(1) // 1-8
+  status      PipelineStatus @default(active)
+
+  // Données inter-étapes (JSON transmis entre modules)
+  ficheMission   Json? // Output étape 1 (AO Reader)
+  scoreResult    Json? // Output étape 2 (Score)
+  prequalifData  Json? // Output étape 3 (Pré-Qualif)
+  dcHarmonise    Json? // Output étape 4 (Robert CV)
+  cvOptimise     Json? // Output étape 5 (CV Reviewer)
+  propaleData    Json? // Output étape 6 (Propale)
+  coachingData   Json? // Output étape 7 (Coaching)
+
+  // Candidat sélectionné
+  selectedCandidateId String?
+
+  // Relations
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization? @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  dossier      Dossier?      @relation(fields: [dossierId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@map("pipeline_sessions")
+}
+
+// ============================================
+// COACHING KIT (SOUTENANCE)
+// ============================================
+
+model CoachingKit {
+  id        String @id @default(cuid())
+  dossierId String
+
+  // Contenu généré
+  briefing     String  @db.Text // Briefing mission complet
+  qa           Json    @default("[]") // [{question: "", answer: "", category: ""}] (min 10)
+  fiche2min    String? @db.Text // Fiche "2 minutes pour convaincre"
+  pointsForts  Json    @default("[]") // ["..."]
+  risques      Json    @default("[]") // ["..."]
+
+  // Export
+  pdfUrl String?
+
+  dossier Dossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([dossierId])
+  @@map("coaching_kits")
+}
+
+// ============================================
+// DOCUMENTS
+// ============================================
+
+model Document {
+  id String @id @default(cuid())
+
+  // Informations fichier
+  name     String
+  type     String // cv, ao, propale, other
+  mimeType String
+  size     Int
+  url      String
+
+  // Relations optionnelles
+  dossierId   String?
+  candidateId String?
+
+  // Métadonnées
+  uploadedBy    String?
+  extractedText String? @db.Text
+  metadata      Json?   @default("{}")
+
+  dossier   Dossier?   @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  candidate Candidate? @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([dossierId])
+  @@index([candidateId])
+  @@map("documents")
+}
+
+// ============================================
+// CHAT IA
+// ============================================
+
+model ChatThread {
+  id     String @id @default(cuid())
+  userId String
+
+  title     String
+  context   String? // dossier, candidate, general
+  contextId String? // ID du dossier ou candidat si applicable
+  module    String?
+  dossierId String?
+
+  isArchived Boolean @default(false)
+
+  messages ChatMessage[]
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("chat_threads")
+}
+
+model ChatMessage {
+  id       String @id @default(cuid())
+  threadId String
+
+  role    String // user, assistant, system
+  content String @db.Text
+
+  // Métadonnées IA
+  model    String?
+  tokens   Int?
+  metadata Json?   @default("{}")
+
+  // Pièces jointes
+  attachments Json @default("[]")
+
+  thread ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([threadId])
+  @@map("chat_messages")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  dossierId String
+  userId    String
+
+  // Relations
+  dossier Dossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([dossierId])
+  @@index([userId])
+  @@map("comments")
+}
+
+// ============================================
+// TEMPLATES DE CV
+// ============================================
+
+model Template {
+  id String @id @default(cuid())
+  orgId String?
+
+  name        String
+  slug        String  @unique
+  description String?
+  thumbnail   String?
+
+  // Configuration
+  config Json // Layout, colors, fonts, etc.
+
+  // Catégorie
+  category  String // modern, classic, creative, minimal
+  isPublic  Boolean @default(true)
+  isPremium Boolean @default(false)
+
+  // Stats
+  usageCount Int @default(0)
+
+  // Relations
+  organization Organization? @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  dossiers     Dossier[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+  @@map("templates")
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+model Notification {
+  id     String @id @default(cuid())
+  userId String
+
+  type    String // info, success, warning, error
+  title   String
+  message String
+  link    String?
+
+  isRead Boolean @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
+}
+
+// ============================================
+// PARAMÈTRES UTILISATEUR
+// ============================================
+
+model UserSettings {
+  id     String @id @default(cuid())
+  userId String @unique
+
+  // Préférences
+  language String @default("fr")
+  theme    String @default("light")
+  timezone String @default("Europe/Paris")
+
+  // Notifications
+  emailNotifications Boolean @default(true)
+  pushNotifications  Boolean @default(false)
+
+  // Entreprise (pour les recruteurs)
+  companyName     String?
+  companyLogo     String?
+  defaultTemplate String?
+
+  // API Keys
+  openaiApiKey String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("user_settings")
+}
+
+// ============================================
+// ACTIVITÉ / AUDIT LOG
+// ============================================
+
+model ActivityLog {
+  id     String  @id @default(cuid())
+  userId String?
+
+  action     String // create, update, delete, view, export
+  entityType String // resume, dossier, candidate, etc.
+  entityId   String?
+
+  metadata  Json    @default("{}")
+  ipAddress String?
+  userAgent String?
+
+  user User? @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([entityType])
+  @@index([createdAt])
+  @@map("activity_logs")
+}

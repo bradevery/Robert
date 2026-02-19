@@ -1,0 +1,282 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 16 avec extensions françaises
+  postgres:
+    image: ankane/pgvector:latest-pg16
+    container_name: authentic-postgres
+    environment:
+      POSTGRES_USER: authentic
+      POSTGRES_PASSWORD: authentic_secure_pwd_2024
+      POSTGRES_DB: authentic_match
+      POSTGRES_INITDB_ARGS: '--locale=fr_FR.UTF-8'
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-authentic-db.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./scripts/french-data.sql:/docker-entrypoint-initdb.d/02-french-data.sql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U authentic -d authentic_match']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: >
+      postgres
+      -c shared_buffers=512MB
+      -c effective_cache_size=2GB
+      -c maintenance_work_mem=128MB
+      -c work_mem=8MB
+      -c max_connections=200
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c wal_buffers=16MB
+      -c checkpoint_completion_target=0.9
+      -c max_wal_size=4GB
+      -c min_wal_size=1GB
+    networks:
+      - authentic-network
+
+  # Redis 7 pour cache haute performance
+  redis:
+    image: redis:7-alpine
+    container_name: authentic-redis
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 4gb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - authentic-network
+
+  # MinIO pour stockage S3-compatible
+  minio:
+    image: minio/minio:latest
+    container_name: authentic-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: authentic_admin
+      MINIO_ROOT_PASSWORD: authentic_secure_pwd_2024
+      MINIO_REGION: fr-par
+      MINIO_BROWSER_REDIRECT_URL: http://localhost:9001
+    ports:
+      - '9000:9000' # API
+      - '9001:9001' # Console
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - authentic-network
+
+  # Typesense pour recherche française
+  typesense:
+    image: typesense/typesense:0.25.1
+    container_name: authentic-typesense
+    environment:
+      TYPESENSE_DATA_DIR: /data
+      TYPESENSE_API_KEY: authentic_typesense_key_2024
+      TYPESENSE_ENABLE_CORS: 'true'
+    ports:
+      - '8108:8108'
+    volumes:
+      - typesense_data:/data
+    networks:
+      - authentic-network
+
+  # BullMQ Board pour monitoring des queues
+  bullboard:
+    image: deadly0/bull-board:latest
+    container_name: authentic-bullboard
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ''
+    ports:
+      - '3030:3000'
+    depends_on:
+      - redis
+    networks:
+      - authentic-network
+
+  # pgAdmin pour administration PostgreSQL
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: authentic-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@authentic-match.fr
+      PGADMIN_DEFAULT_PASSWORD: admin_authentic_2024
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    ports:
+      - '5050:80'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./config/pgadmin-servers.json:/pgadmin4/servers.json
+    depends_on:
+      - postgres
+    networks:
+      - authentic-network
+
+  # Redis Commander pour interface Redis
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: authentic-redis-commander
+    environment:
+      REDIS_HOSTS: local:redis:6379
+      HTTP_USER: admin
+      HTTP_PASSWORD: admin_authentic_2024
+    ports:
+      - '8081:8081'
+    depends_on:
+      - redis
+    networks:
+      - authentic-network
+
+  # Grafana pour monitoring avancé
+  grafana:
+    image: grafana/grafana:latest
+    container_name: authentic-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin_authentic_2024
+      GF_INSTALL_PLUGINS: redis-datasource,redis-app
+    ports:
+      - '3031:3000'
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./config/grafana/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - authentic-network
+
+  # Prometheus pour métriques
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: authentic-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - '9090:9090'
+    volumes:
+      - prometheus_data:/prometheus
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - authentic-network
+
+  # Node Exporter pour métriques système
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: authentic-node-exporter
+    ports:
+      - '9100:9100'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - authentic-network
+
+  # Postgres Exporter pour métriques PostgreSQL
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: authentic-postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: 'postgresql://authentic:authentic_secure_pwd_2024@postgres:5432/authentic_match?sslmode=disable'
+    ports:
+      - '9187:9187'
+    depends_on:
+      - postgres
+    networks:
+      - authentic-network
+
+  # Redis Exporter pour métriques Redis
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: authentic-redis-exporter
+    environment:
+      REDIS_ADDR: 'redis://redis:6379'
+    ports:
+      - '9121:9121'
+    depends_on:
+      - redis
+    networks:
+      - authentic-network
+
+  # Mailhog pour tests emails (dev)
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: authentic-mailhog
+    ports:
+      - '1025:1025' # SMTP
+      - '8025:8025' # Web UI
+    networks:
+      - authentic-network
+
+  # Backup service
+  backup:
+    image: postgres:16-alpine
+    container_name: authentic-backup
+    environment:
+      PGPASSWORD: authentic_secure_pwd_2024
+    volumes:
+      - ./backups:/backups
+    command: >
+      sh -c "while true; do
+        pg_dump -h postgres -U authentic authentic_match > /backups/authentic_backup_$$(date +%Y%m%d_%H%M%S).sql
+        find /backups -name '*.sql' -mtime +7 -delete
+        sleep 86400
+      done"
+    depends_on:
+      - postgres
+    networks:
+      - authentic-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  minio_data:
+    driver: local
+  typesense_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+  grafana_data:
+    driver: local
+  prometheus_data:
+    driver: local
+
+networks:
+  authentic-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16

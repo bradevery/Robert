@@ -1,0 +1,513 @@
+{
+  "diplomas": [
+    {
+      "name": "Doctorat",
+      "level": "Bac+8",
+      "rncp": 8,
+      "type": "Doctorat",
+      "equivalents": ["PhD", "Thèse", "Doctorat d'université"],
+      "domains": ["Recherche", "Académique"]
+    },
+    {
+      "name": "Master",
+      "level": "Bac+5",
+      "rncp": 7,
+      "type": "Master",
+      "equivalents": ["Master 2", "M2", "DESS", "DEA", "Mastère"],
+      "domains": ["Tous"]
+    },
+    {
+      "name": "Diplôme d'ingénieur",
+      "level": "Bac+5",
+      "rncp": 7,
+      "type": "Ingénieur",
+      "equivalents": ["Ingénieur diplômé", "Master", "Grande École"],
+      "domains": ["Ingénierie", "Sciences"]
+    },
+    {
+      "name": "Master 1",
+      "level": "Bac+4",
+      "rncp": 6,
+      "type": "Master 1",
+      "equivalents": ["M1", "Maîtrise"],
+      "domains": ["Tous"]
+    },
+    {
+      "name": "Licence",
+      "level": "Bac+3",
+      "rncp": 6,
+      "type": "Licence",
+      "equivalents": ["Bachelor", "Licence Pro", "L3"],
+      "domains": ["Tous"]
+    },
+    {
+      "name": "BUT",
+      "level": "Bac+3",
+      "rncp": 6,
+      "type": "BUT",
+      "equivalents": ["Bachelor Universitaire Technologie", "ex-DUT"],
+      "domains": ["Technologie"]
+    },
+    {
+      "name": "BTS",
+      "level": "Bac+2",
+      "rncp": 5,
+      "type": "BTS",
+      "equivalents": ["Brevet Technicien Supérieur"],
+      "domains": ["Tous"]
+    },
+    {
+      "name": "DUT",
+      "level": "Bac+2",
+      "rncp": 5,
+      "type": "DUT",
+      "equivalents": ["Diplôme Universitaire Technologie"],
+      "domains": ["Technologie"]
+    },
+    {
+      "name": "Baccalauréat",
+      "level": "Bac",
+      "rncp": 4,
+      "type": "Bac",
+      "equivalents": ["Bac général", "Bac techno", "Bac pro"],
+      "domains": ["Tous"]
+    }
+  ],
+  "skills": {
+    "programming": [
+      {
+        "name": "JavaScript",
+        "category": "technique",
+        "related": ["TypeScript", "Node.js", "React", "Vue.js"],
+        "transferable": ["TypeScript", "ECMAScript"]
+      },
+      {
+        "name": "TypeScript",
+        "category": "technique",
+        "related": ["JavaScript", "Node.js", "Angular", "React"],
+        "transferable": ["JavaScript"]
+      },
+      {
+        "name": "Python",
+        "category": "technique",
+        "related": ["Django", "Flask", "FastAPI", "NumPy"],
+        "transferable": ["Ruby", "PHP"]
+      },
+      {
+        "name": "Java",
+        "category": "technique",
+        "related": ["Spring", "Kotlin", "Maven", "Gradle"],
+        "transferable": ["C#", "Kotlin"]
+      },
+      {
+        "name": "PHP",
+        "category": "technique",
+        "related": ["Laravel", "Symfony", "WordPress"],
+        "transferable": ["Python", "Ruby"]
+      },
+      {
+        "name": "C#",
+        "category": "technique",
+        "related": [".NET", "ASP.NET", "Unity"],
+        "transferable": ["Java", "TypeScript"]
+      }
+    ],
+    "frontend": [
+      {
+        "name": "React",
+        "category": "technique",
+        "related": ["Next.js", "Redux", "React Native"],
+        "transferable": ["Vue.js", "Angular", "Svelte"]
+      },
+      {
+        "name": "Vue.js",
+        "category": "technique",
+        "related": ["Nuxt.js", "Vuex", "Pinia"],
+        "transferable": ["React", "Angular"]
+      },
+      {
+        "name": "Angular",
+        "category": "technique",
+        "related": ["RxJS", "TypeScript", "NgRx"],
+        "transferable": ["React", "Vue.js"]
+      },
+      {
+        "name": "Next.js",
+        "category": "technique",
+        "related": ["React", "Vercel", "SSR"],
+        "transferable": ["Nuxt.js", "Remix"]
+      }
+    ],
+    "backend": [
+      {
+        "name": "Node.js",
+        "category": "technique",
+        "related": ["Express", "NestJS", "JavaScript"],
+        "transferable": ["Deno", "Bun"]
+      },
+      {
+        "name": "Django",
+        "category": "technique",
+        "related": ["Python", "DRF", "PostgreSQL"],
+        "transferable": ["Flask", "FastAPI", "Rails"]
+      },
+      {
+        "name": "Spring",
+        "category": "technique",
+        "related": ["Spring Boot", "Java", "Hibernate"],
+        "transferable": ["Django", "Express", "Rails"]
+      }
+    ],
+    "database": [
+      {
+        "name": "PostgreSQL",
+        "category": "technique",
+        "related": ["SQL", "pgAdmin", "PostGIS"],
+        "transferable": ["MySQL", "Oracle", "SQL Server"]
+      },
+      {
+        "name": "MongoDB",
+        "category": "technique",
+        "related": ["NoSQL", "Mongoose", "Atlas"],
+        "transferable": ["Firestore", "CouchDB"]
+      },
+      {
+        "name": "Redis",
+        "category": "technique",
+        "related": ["Cache", "In-memory DB"],
+        "transferable": ["Memcached"]
+      }
+    ],
+    "devops": [
+      {
+        "name": "Docker",
+        "category": "technique",
+        "related": ["Kubernetes", "Containers", "Docker Compose"],
+        "transferable": ["Podman", "LXC"]
+      },
+      {
+        "name": "Kubernetes",
+        "category": "technique",
+        "related": ["Docker", "Helm", "K8s"],
+        "transferable": ["Docker Swarm", "Nomad"]
+      },
+      {
+        "name": "Git",
+        "category": "technique",
+        "related": ["GitHub", "GitLab", "Version control"],
+        "transferable": ["SVN", "Mercurial"]
+      },
+      {
+        "name": "CI/CD",
+        "category": "technique",
+        "related": ["GitHub Actions", "Jenkins", "GitLab CI"],
+        "transferable": ["Azure DevOps", "CircleCI"]
+      }
+    ],
+    "soft": [
+      {
+        "name": "Travail en équipe",
+        "category": "comportementale",
+        "synonyms": ["Esprit d'équipe", "Collaboration", "Teamwork"],
+        "validated_by": ["Projet collaboratif", "Management", "Scrum"]
+      },
+      {
+        "name": "Communication",
+        "category": "comportementale",
+        "synonyms": ["Bon relationnel", "Communication orale", "Écoute"],
+        "validated_by": ["Présentation", "Formation", "Client-facing"]
+      },
+      {
+        "name": "Autonomie",
+        "category": "comportementale",
+        "synonyms": ["Indépendant", "Proactif", "Initiative"],
+        "validated_by": ["Projet solo", "Télétravail", "Responsabilité"]
+      },
+      {
+        "name": "Adaptabilité",
+        "category": "comportementale",
+        "synonyms": ["Flexible", "Polyvalent", "Agilité"],
+        "validated_by": ["Changement technologie", "Nouveau secteur"]
+      },
+      {
+        "name": "Rigueur",
+        "category": "comportementale",
+        "synonyms": ["Méthodique", "Précis", "Organisé"],
+        "validated_by": ["Tests", "Documentation", "Qualité"]
+      }
+    ]
+  },
+  "languages": [
+    {
+      "level": "A1",
+      "cecrl": "A1",
+      "description": "Débutant",
+      "equivalents": ["Notions", "Élémentaire"],
+      "certifications": {
+        "TOEIC": "120-225",
+        "BULATS": "10-19"
+      }
+    },
+    {
+      "level": "A2",
+      "cecrl": "A2",
+      "description": "Élémentaire",
+      "equivalents": ["Faux débutant", "Basique"],
+      "certifications": {
+        "TOEIC": "225-550",
+        "BULATS": "20-39"
+      }
+    },
+    {
+      "level": "B1",
+      "cecrl": "B1",
+      "description": "Intermédiaire",
+      "equivalents": ["Moyen", "Seuil"],
+      "certifications": {
+        "TOEIC": "550-785",
+        "BULATS": "40-59"
+      }
+    },
+    {
+      "level": "B2",
+      "cecrl": "B2",
+      "description": "Intermédiaire avancé",
+      "equivalents": ["Bon niveau", "Indépendant"],
+      "certifications": {
+        "TOEIC": "785-945",
+        "BULATS": "60-74"
+      }
+    },
+    {
+      "level": "C1",
+      "cecrl": "C1",
+      "description": "Avancé",
+      "equivalents": ["Très bon niveau", "Autonome"],
+      "certifications": {
+        "TOEIC": "945+",
+        "BULATS": "75-89"
+      }
+    },
+    {
+      "level": "C2",
+      "cecrl": "C2",
+      "description": "Maîtrise",
+      "equivalents": ["Bilingue", "Natif"],
+      "certifications": {
+        "TOEIC": "990",
+        "BULATS": "90-100"
+      }
+    }
+  ],
+  "companies": [
+    {
+      "name": "Startup",
+      "type": "startup",
+      "size": "1-50",
+      "culture": ["Agilité", "Innovation", "Autonomie", "Croissance"],
+      "typical_tech": ["React", "Node.js", "MongoDB", "Docker"]
+    },
+    {
+      "name": "PME",
+      "type": "pme",
+      "size": "50-250",
+      "culture": ["Proximité", "Polyvalence", "Réactivité"],
+      "typical_tech": ["PHP", "MySQL", "WordPress", "jQuery"]
+    },
+    {
+      "name": "Grand Groupe",
+      "type": "grand_groupe",
+      "size": "250+",
+      "culture": ["Structure", "Process", "Carrière", "Formation"],
+      "typical_tech": ["Java", "Spring", "Oracle", "SAP"]
+    },
+    {
+      "name": "ESN",
+      "type": "esn",
+      "size": "Variable",
+      "culture": ["Client", "Mission", "Mobilité", "Expertise"],
+      "typical_tech": ["Varié selon client"]
+    },
+    {
+      "name": "Service Public",
+      "type": "public",
+      "size": "Variable",
+      "culture": ["Service", "Stabilité", "Réglementation"],
+      "typical_tech": ["Java", "Open Source", "Sécurité"]
+    }
+  ],
+  "conventions": [
+    {
+      "name": "Syntec",
+      "code": "3018",
+      "sectors": ["Informatique", "Ingénierie", "Conseil"],
+      "benefits": ["RTT", "Mutuelle", "Tickets restaurant", "Prime vacances"]
+    },
+    {
+      "name": "Métallurgie",
+      "code": "3109",
+      "sectors": ["Industrie", "Automobile", "Aéronautique"],
+      "benefits": ["13ème mois", "Prime ancienneté", "Mutuelle"]
+    },
+    {
+      "name": "Banque",
+      "code": "2120",
+      "sectors": ["Banque", "Finance", "Assurance"],
+      "benefits": ["13ème mois", "Intéressement", "Participation"]
+    },
+    {
+      "name": "Commerce",
+      "code": "3305",
+      "sectors": ["Retail", "Distribution", "E-commerce"],
+      "benefits": ["Prime objectifs", "Tickets restaurant"]
+    }
+  ],
+  "certifications": [
+    {
+      "name": "AWS Certified Solutions Architect",
+      "category": "cloud",
+      "provider": "Amazon",
+      "validity_years": 3
+    },
+    {
+      "name": "Google Cloud Professional",
+      "category": "cloud",
+      "provider": "Google",
+      "validity_years": 2
+    },
+    {
+      "name": "Microsoft Azure",
+      "category": "cloud",
+      "provider": "Microsoft",
+      "validity_years": 2
+    },
+    {
+      "name": "Scrum Master",
+      "category": "agile",
+      "provider": "Scrum Alliance",
+      "validity_years": 2
+    },
+    {
+      "name": "PMP",
+      "category": "project_management",
+      "provider": "PMI",
+      "validity_years": 3
+    },
+    {
+      "name": "TOEIC",
+      "category": "language",
+      "provider": "ETS",
+      "validity_years": 2
+    },
+    {
+      "name": "Certificat Voltaire",
+      "category": "language",
+      "provider": "Projet Voltaire",
+      "validity_years": null
+    }
+  ],
+  "sectors": [
+    {
+      "name": "Tech",
+      "keywords": ["informatique", "numérique", "digital", "IT", "tech"],
+      "typical_skills": ["Programmation", "Cloud", "DevOps", "Data"],
+      "typical_diplomas": ["Master Informatique", "Ingénieur", "BTS SIO"]
+    },
+    {
+      "name": "Finance",
+      "keywords": ["banque", "assurance", "finance", "trading"],
+      "typical_skills": ["Java", "Python", "SQL", "Analyse financière"],
+      "typical_diplomas": ["Master Finance", "École Commerce", "Ingénieur"]
+    },
+    {
+      "name": "Santé",
+      "keywords": ["santé", "médical", "pharma", "biotech"],
+      "typical_skills": ["Réglementation", "Qualité", "R&D"],
+      "typical_diplomas": ["Médecine", "Pharmacie", "Master Santé"]
+    },
+    {
+      "name": "Industrie",
+      "keywords": ["industrie", "manufacturing", "production"],
+      "typical_skills": ["Automatisation", "Qualité", "Lean", "Six Sigma"],
+      "typical_diplomas": ["Ingénieur", "BTS Industriel", "DUT"]
+    },
+    {
+      "name": "Commerce",
+      "keywords": ["commerce", "vente", "retail", "distribution"],
+      "typical_skills": ["Négociation", "CRM", "Marketing"],
+      "typical_diplomas": ["BTS Commerce", "École Commerce", "Licence"]
+    }
+  ],
+  "regions": [
+    {
+      "name": "Île-de-France",
+      "departments": ["75", "77", "78", "91", "92", "93", "94", "95"],
+      "major_cities": ["Paris", "Versailles", "Boulogne-Billancourt"],
+      "economic_focus": ["Tech", "Finance", "Luxe", "Services"]
+    },
+    {
+      "name": "Auvergne-Rhône-Alpes",
+      "departments": [
+        "01",
+        "03",
+        "07",
+        "15",
+        "26",
+        "38",
+        "42",
+        "43",
+        "63",
+        "69",
+        "73",
+        "74"
+      ],
+      "major_cities": ["Lyon", "Grenoble", "Saint-Étienne"],
+      "economic_focus": ["Tech", "Pharma", "Industrie"]
+    },
+    {
+      "name": "Provence-Alpes-Côte d'Azur",
+      "departments": ["04", "05", "06", "13", "83", "84"],
+      "major_cities": ["Marseille", "Nice", "Aix-en-Provence"],
+      "economic_focus": ["Tourisme", "Tech", "Logistique"]
+    },
+    {
+      "name": "Occitanie",
+      "departments": [
+        "09",
+        "11",
+        "12",
+        "30",
+        "31",
+        "32",
+        "34",
+        "46",
+        "48",
+        "65",
+        "66",
+        "81",
+        "82"
+      ],
+      "major_cities": ["Toulouse", "Montpellier"],
+      "economic_focus": ["Aéronautique", "Tech", "Recherche"]
+    },
+    {
+      "name": "Nouvelle-Aquitaine",
+      "departments": [
+        "16",
+        "17",
+        "19",
+        "23",
+        "24",
+        "33",
+        "40",
+        "47",
+        "64",
+        "79",
+        "86",
+        "87"
+      ],
+      "major_cities": ["Bordeaux", "Limoges"],
+      "economic_focus": ["Aéronautique", "Vin", "Tech"]
+    }
+  ]
+}
