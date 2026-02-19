@@ -6,6 +6,7 @@ import {
   Edit3,
   Eye,
   FileText,
+  Loader2,
   Plus,
   Star,
   Trash2,
@@ -193,7 +194,12 @@ function MyCVsPage() {
                             <Eye className='w-4 h-4' />
                           </Link>
                         </Button>
-                        <Button variant='ghost' size='sm' title='Modifier' asChild>
+                        <Button
+                          variant='ghost'
+                          size='sm'
+                          title='Modifier'
+                          asChild
+                        >
                           <Link href={`/cv-builder?id=${cv.id}`}>
                             <Edit3 className='w-4 h-4' />
                           </Link>

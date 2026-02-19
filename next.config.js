@@ -1,3 +1,6 @@
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { withSentryConfig } = require('@sentry/nextjs');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
@@ -5,17 +8,6 @@ const nextConfig = {
   },
 
   reactStrictMode: true,
-  swcMinify: true,
-
-  experimental: {
-    instrumentationHook: true,
-  },
-
-  images: {
-    domains: [
-      //
-    ],
-  },
 
   typescript: {
     // !! WARN !!
@@ -100,13 +92,7 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
-
-// Injected content via Sentry wizard below
-
-const { withSentryConfig } = require('@sentry/nextjs');
-
-module.exports = withSentryConfig(module.exports, {
+module.exports = withSentryConfig(nextConfig, {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { AlertCircle, Clock, Download, FileText, Loader2 } from 'lucide-react';
+import { useParams } from 'next/navigation';
 import { useRef, useState } from 'react';
 
 import { downloadPDF } from '@/lib/pdf/export';
@@ -8,10 +9,11 @@ import { useShare } from '@/hooks/useShare';
 
 import { Button } from '@/components/ui/button';
 
-export default function SharePage({ params }: { params: { token: string } }) {
+export default function SharePage() {
+  const params = useParams<{ token: string }>();
   const { useSharedDocument } = useShare();
   const { data, isLoading: loading, error } = useSharedDocument(params.token);
-  
+
   const [isExporting, setIsExporting] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -49,7 +51,9 @@ export default function SharePage({ params }: { params: { token: string } }) {
             <h1 className='text-xl font-bold text-gray-900 mb-2'>
               Document non disponible
             </h1>
-            <p className='text-gray-600'>{(error as Error)?.message || 'Une erreur est survenue'}</p>
+            <p className='text-gray-600'>
+              {(error as Error)?.message || 'Une erreur est survenue'}
+            </p>
           </div>
         </div>
       </div>

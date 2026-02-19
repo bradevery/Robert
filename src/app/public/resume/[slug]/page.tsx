@@ -6,19 +6,16 @@ import prismadb from '@/lib/prisma.db';
 
 import { getTemplate } from '@/components/templates';
 
-interface PublicResumePageProps {
-  params: {
-    slug: string;
-  };
-}
-
 export default async function PublicResumePage({
   params,
-}: PublicResumePageProps) {
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
   // Récupérer le CV public par slug
   const resume = await prismadb.resume.findFirst({
     where: {
-      slug: params.slug,
+      slug,
       isPublic: true,
     },
     include: {
